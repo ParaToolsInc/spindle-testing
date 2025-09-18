@@ -1,0 +1,95 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  spindle-serial-ubuntu:
+    name: Testsuite (Serial, Ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out Spindle
+        uses: actions/checkout@v5
+        with:
+          path: 'Spindle'
+
+      - name: Setup Docker Compose
+        uses: docker/setup-compose-action@v1
+        with:
+          version: latest
+
+      - name: Build spindle-serial-ubuntu image
+        id: serial-ubuntu-build
+        run: |
+          cd Spindle/containers/spindle-serial-ubuntu
+          docker compose --progress=plain build
+
+      - name: Bring spindle-serial-ubuntu up
+        id: serial-ubuntu-up
+        run: |
+          cd Spindle/containers/spindle-serial-ubuntu
+          docker compose up -d
+
+      - name: Verify munge works in spindle-serial-ubuntu
+        id: serial-ubuntu-munge
+        run: |
+          docker exec spindlenode bash -c 'munge -n | unmunge'
+
+      - name: Run spindle-serial-ubuntu testsuite
+        id: serial-ubuntu-testsuite
+        run: |
+          docker exec spindlenode bash -c 'cd Spindle-build/testsuite && ./runTests'
+
+      - name: Bring spindle-serial-ubuntu down
+        id: serial-ubuntu-down
+        if: ${{ always() }}
+        continue-on-error: true
+        run: |
+          cd Spindle/containers/spindle-serial-ubuntu
+          docker compose down
+
+  spindle-flux-ubuntu:
+    name: Testsuite (Flux, Ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out Spindle
+        uses: actions/checkout@v5
+        with:
+          path: 'Spindle'
+
+      - name: Setup Docker Compose
+        uses: docker/setup-compose-action@v1
+        with:
+          version: latest
+
+      - name: Build spindle-flux-ubuntu image
+        id: flux-ubuntu-build
+        run: |
+          cd Spindle/containers/spindle-flux-ubuntu
+          docker compose --progress=plain build
+
+      - name: Bring spindle-flux-ubuntu up
+        id: flux-ubuntu-up
+        run: |
+          cd Spindle/containers/spindle-flux-ubuntu
+          docker compose up -d --wait --wait-timeout 60
+
+      - name: Verify munge works in spindle-flux-ubuntu
+        id: flux-ubuntu-munge
+        run: |
+          docker exec node-1 bash -c 'munge -n | unmunge'
+
+      - name: Run spindle-flux-ubuntu testsuite
+        id: flux-ubuntu-testsuite
+        run: |
+          docker exec node-1 bash -c 'cd Spindle-build/testsuite && flux alloc --nodes=${workers} ./runTests --nodes=${workers} --tasks-per-node=3'
+
+      - name: Bring spindle-flux-ubuntu down
+        id: flux-ubuntu-down
+        if: ${{ always() }}
+        continue-on-error: true
+        run: |
+          cd Spindle/containers/spindle-flux-ubuntu
+          docker compose down
+
