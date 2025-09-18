@@ -25,7 +25,7 @@ jobs:
           echo "github.event_name: ${{ github.event_name }}"
           echo "github.ref:        ${{ github.ref }}"
           set -x
-          docker --version
+          docker version
           docker compose version
           uname -a
           lscpu
