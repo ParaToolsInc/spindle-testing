@@ -1,0 +1,83 @@
+ARG ubuntu_version=noble
+FROM ubuntu:${ubuntu_version}
+USER root
+
+RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
+# install latest pkg utils:
+ && apt-get -qq install -y --no-install-recommends \
+        apt-utils
+
+RUN DEBIAN_FRONTEND="noninteractive" apt-get -qq install -y --no-install-recommends \
+        locales \
+        ca-certificates \
+        wget \
+        man \
+        git \
+        flex \
+        ssh \
+        sudo \
+        vim \
+        munge \
+        build-essential \
+        pkg-config \
+        autotools-dev \
+        libtool \
+        autoconf \
+        automake \
+        make \
+        cmake \
+        gfortran-13 \
+        gcc-13 \
+        g++-13 \
+        gdb \
+        libffi-dev \
+        python3-dev \
+        python3-pip \
+        python3-setuptools \
+        python3-wheel \
+        libmunge-dev \
+        libncursesw5-dev \
+        liblz4-dev \
+        libsqlite3-dev \
+        uuid-dev \
+        libhwloc-dev \
+        libevent-dev \
+        libarchive-dev \
+        libpam-dev \
+        libpmix-dev \
+        time \
+        openssh-server \
+        openssh-client \
+        libdb-dev \
+        dnsutils \
+        iputils-ping \
+        libgcrypt20 \
+        libgcrypt20-dev \
+        mpich \
+        libmpich-dev \
+        software-properties-common
+
+ENV HWLOC_COMPONENTS=-gl
+
+RUN mkdir -p /run/munge && \
+    chown munge:munge /run/munge && \
+    chmod 0755 /run/munge
+
+ARG USER=spindleuser
+ARG UID=1001
+ARG BUILD_ROOT=./containers/spindle-serial-ubuntu
+COPY $BUILD_ROOT/scripts/add_docker_user.sh /add_docker_user.sh
+RUN /add_docker_user.sh
+
+USER $USER
+WORKDIR /home/$USER
+RUN mkdir -p /home/$USER/Spindle
+COPY . /home/$USER/Spindle
+COPY $BUILD_ROOT/scripts/build_spindle.sh /home/$USER/build_spindle.sh
+RUN ./build_spindle.sh
+
+COPY $BUILD_ROOT/scripts/entrypoint.sh /home/$USER/entrypoint.sh
+ENV PATH /home/$USER/Spindle-inst/bin:$PATH
+
+ENTRYPOINT /bin/bash ./entrypoint.sh
+
