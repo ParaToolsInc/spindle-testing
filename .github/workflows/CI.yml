@@ -28,6 +28,8 @@ jobs:
           docker --version
           docker compose version
           uname -a
+          lscpu
+          free -h
           mount
           df -h
           getent passwd
