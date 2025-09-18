@@ -50,12 +50,12 @@ jobs:
       - name: Verify munge works in spindle-serial-ubuntu
         id: serial-ubuntu-munge
         run: |
-          docker exec -it spindlenode bash -c 'munge -n | unmunge'
+          docker exec spindlenode bash -c 'munge -n | unmunge'
 
       - name: Run spindle-serial-ubuntu testsuite
         id: serial-ubuntu-testsuite
         run: |
-          docker exec -it spindlenode bash -c 'cd Spindle-build/testsuite && ./runTests'
+          docker exec spindlenode bash -c 'cd Spindle-build/testsuite && ./runTests'
 
       - name: Bring spindle-serial-ubuntu down
         id: down-serial-ubuntu
