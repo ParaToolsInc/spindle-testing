@@ -20,9 +20,7 @@ x-shared-environment: &shared-environment
   <<: *workers
 
 x-shared-volumes: &shared-volumes
-  - ./flux/imp.toml:/etc/flux/imp/conf.d/imp.toml
-  - ./flux/broker.toml:/etc/flux/config/broker.toml
-  - ./:/code/workdir
+  - ./containers/spindle-flux-ubuntu/:/code/workdir
   - shared:/shared
 
 volumes:

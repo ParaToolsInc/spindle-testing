@@ -27,14 +27,17 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get update \
         software-properties-common
 
 ARG USER=fluxuser
+ARG BUILD_ROOT=./containers/spindle-flux-ubuntu
 
 # Allow fluxuser to run as other users so it can start munged
 RUN sh -c "printf \"$USER ALL=(ALL) NOPASSWD: ALL\\n\" >> /etc/sudoers"
 
 # Configure flux
 ENV STATE_DIR=/var/lib/flux
-RUN mkdir -p ${STATE_DIR} /etc/flux/system /etc/flux/system/cron.d /etc/flux/config /run/flux && \
-    mkdir -p /etc/flux/system/cron.d && \
+RUN mkdir -p ${STATE_DIR} /etc/flux/system /etc/flux/system/cron.d /etc/flux/config /run/flux /etc/flux/imp/conf.d
+COPY $BUILD_ROOT/flux/imp.toml /etc/flux/imp/conf.d/
+COPY $BUILD_ROOT/flux/broker.toml /etc/flux/config/
+RUN mkdir -p /etc/flux/system/cron.d && \
     mkdir -p /mnt/curve && \
     flux keygen /mnt/curve/curve.cert && \
     flux R encode --hosts="node-[1-${workers}]" > /etc/flux/system/R && \
@@ -42,7 +45,6 @@ RUN mkdir -p ${STATE_DIR} /etc/flux/system /etc/flux/system/cron.d /etc/flux/con
 
 # Build Spindle
 WORKDIR /home/$USER
-ARG BUILD_ROOT=./containers/spindle-flux-ubuntu
 COPY . /home/$USER/Spindle
 COPY $BUILD_ROOT/scripts/build_spindle.sh /home/$USER/build_spindle.sh
 RUN ./build_spindle.sh
@@ -56,6 +58,7 @@ RUN chown -R $USER:$USER /home/fluxuser && \
 
 USER $USER
 COPY $BUILD_ROOT/scripts/flux_healthcheck.sh ./
+COPY $BUILD_ROOT/scripts/run_spindle_tests.sh ./
 COPY $BUILD_ROOT/scripts/entrypoint.sh ./
 ENV PATH /home/$USER/Spindle-inst/bin:$PATH
 ENV HWLOC_HIDE_ERRORS 2
