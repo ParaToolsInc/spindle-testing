@@ -16,15 +16,7 @@ x-shared-build-context: &shared-build-context
     
 x-shared-environment: &shared-environment
   mainHost: node-1
-  workdir: /code/workdir
   <<: *workers
-
-x-shared-volumes: &shared-volumes
-  - ./containers/spindle-flux-ubuntu/:/code/workdir
-  - shared:/shared
-
-volumes:
-  shared:
 
 networks:
   flux:
@@ -35,7 +27,6 @@ x-shared-node-parameters: &shared-node-parameters
   networks:
     - flux
   environment: *shared-environment
-  volumes: *shared-volumes
   cap_add:
     - SYS_NICE
 
