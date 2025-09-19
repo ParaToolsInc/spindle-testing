@@ -6,7 +6,7 @@ jobs:
   spindle-serial-ubuntu:
     name: Testsuite (Serial, Ubuntu)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - name: Check out Spindle
         uses: actions/checkout@v5
@@ -17,25 +17,6 @@ jobs:
         uses: docker/setup-compose-action@v1
         with:
           version: latest
-
-      - name: Log runner info
-        id: info
-        continue-on-error: true
-        run: |
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.ref:        ${{ github.ref }}"
-          set -x
-          docker version
-          docker compose version
-          uname -a
-          lscpu
-          free -h
-          mount
-          df -h
-          getent passwd
-          getent group
-          ls -la
-          ls -la ./Spindle
 
       - name: Build spindle-serial-ubuntu image
         id: serial-ubuntu-build
@@ -70,7 +51,7 @@ jobs:
   spindle-flux-ubuntu:
     name: Testsuite (Flux, Ubuntu)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
     steps:
       - name: Check out Spindle
         uses: actions/checkout@v5
@@ -82,25 +63,6 @@ jobs:
         with:
           version: latest
 
-      - name: Log runner info
-        id: info
-        continue-on-error: true
-        run: |
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.ref:        ${{ github.ref }}"
-          set -x
-          docker version
-          docker compose version
-          uname -a
-          lscpu
-          free -h
-          mount
-          df -h
-          getent passwd
-          getent group
-          ls -la
-          ls -la ./Spindle
-      
       - name: Build spindle-flux-ubuntu image
         id: flux-ubuntu-build
         run: |
@@ -121,7 +83,7 @@ jobs:
       - name: Run spindle-flux-ubuntu testsuite
         id: flux-ubuntu-testsuite
         run: |
-          docker exec node-1 bash -c 'cd Spindle-build/testsuite && flux alloc --nodes=4 ./runTests'
+          docker exec node-1 bash -c 'cd Spindle-build/testsuite && flux alloc --nodes=${workers} ./runTests --nodes=${workers} --tasks-per-node=3'
 
       - name: Bring spindle-flux-ubuntu down
         id: flux-ubuntu-down
