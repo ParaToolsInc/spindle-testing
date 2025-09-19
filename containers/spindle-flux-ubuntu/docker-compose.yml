@@ -6,7 +6,7 @@ x-shared-workers:
   replicas: 4
 
 x-shared-build-args: &shared-build-args
-  flux_sched_version: jammy
+  flux_sched_version: noble
   <<: *workers
 
 x-shared-build-context: &shared-build-context

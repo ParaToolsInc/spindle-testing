@@ -41,7 +41,7 @@ jobs:
         id: serial-ubuntu-build
         run: |
           cd Spindle/containers/spindle-serial-ubuntu
-          docker compose build --progress=plain
+          docker compose --progress=plain build
 
       - name: Bring spindle-serial-ubuntu up
         id: serial-ubuntu-up
@@ -105,7 +105,7 @@ jobs:
         id: flux-ubuntu-build
         run: |
           cd Spindle/containers/spindle-flux-ubuntu
-          docker compose build --progress=plain
+          docker compose --progress=plain build
 
       - name: Bring spindle-flux-ubuntu up
         id: flux-ubuntu-up

@@ -1,6 +1,6 @@
 # This is based on the Flux Container Tutorial
 # See https://flux-framework.readthedocs.io/en/latest/tutorials/containers
-ARG flux_sched_version=jammy
+ARG flux_sched_version=noble
 FROM fluxrm/flux-sched:${flux_sched_version} AS builder
 ARG replicas=3
 ENV workers=${replicas}
