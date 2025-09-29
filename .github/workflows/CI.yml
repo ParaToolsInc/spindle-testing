@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   spindle-serial-ubuntu:
     name: Testsuite (Serial, Ubuntu)
+    environment: Spindle CI
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -50,6 +51,7 @@ jobs:
 
   spindle-flux-ubuntu:
     name: Testsuite (Flux, Ubuntu)
+    environment: Spindle CI
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
