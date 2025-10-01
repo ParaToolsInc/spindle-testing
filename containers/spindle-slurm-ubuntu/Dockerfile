@@ -1,0 +1,107 @@
+ARG UBUNTU_VERSION=noble
+FROM ubuntu:${UBUNTU_VERSION}
+ARG replicas=4
+ENV workers=${replicas}
+USER root
+
+RUN apt-get update \
+ && DEBIAN_FRONTEND="noninteractive" apt-get -qq install -y --no-install-recommends \
+        apt-utils
+
+RUN apt-get update \
+ && DEBIAN_FRONTEND="noninteractive" apt-get -qq install -y --no-install-recommends \
+        locales \
+        ca-certificates \
+        wget \
+        git \
+        ssh \
+        sudo \
+        build-essential \
+        pkg-config \
+        autotools-dev \
+        libtool \
+        autoconf \
+        automake \
+        make \
+        gfortran-13 \
+        gcc-13 \
+        g++-13 \
+        munge \
+        libmunge-dev \
+        libhwloc-dev \
+        python3-dev \
+        python3-pip \
+        python3-setuptools \
+        python3-wheel \
+        python-is-python3 \
+        openssh-server \
+        openssh-client \
+        mariadb-client \
+        libmariadb-dev \
+        libhttp-parser-dev \
+        psmisc \
+        libjson-c-dev \
+        fd-find \
+        silversearcher-ag \
+        vim
+
+
+# Prevent hwloc from trying to use graphics cards
+# as this fails when X is not running.
+ENV HWLOC_COMPONENTS=-gl
+
+# Set up munge
+RUN mkdir -p /run/munge && \
+    chown munge:munge /run/munge && \
+    chmod 0755 /run/munge
+
+ARG BUILD_ROOT=containers/spindle-slurm-ubuntu
+COPY ${BUILD_ROOT}/scripts/add_docker_user.sh /add_docker_user.sh
+
+# Slurm daemons run as $SLURM_USER
+ARG SLURM_USER=slurm
+ARG USER=${SLURM_USER}
+ARG UID=1002
+RUN /add_docker_user.sh
+
+# Applications run as $USER
+ARG USER=slurmuser
+ARG UID=1001
+RUN /add_docker_user.sh
+
+ARG SLURM_VERSION
+COPY ${BUILD_ROOT}/scripts/build_slurm.sh /build_slurm.sh
+RUN /build_slurm.sh
+
+ARG MPICH_VERSION
+COPY ${BUILD_ROOT}/scripts/build_mpich.sh /build_mpich.sh
+RUN /build_mpich.sh
+
+COPY ${BUILD_ROOT}/scripts/setup_slurm.sh /setup_slurm.sh
+COPY ${BUILD_ROOT}/conf/slurm.conf /home/${SLURM_USER}/slurm.conf
+COPY ${BUILD_ROOT}/conf/slurmdbd.conf /home/${SLURM_USER}/slurmdbd.conf
+COPY ${BUILD_ROOT}/conf/cgroup.conf /home/${SLURM_USER}/cgroup.conf
+RUN /setup_slurm.sh
+
+COPY ${BUILD_ROOT}/conf/mpich.conf /etc/ld.so.conf.d/mpich.conf
+RUN ldconfig
+
+# Slurm without Spank plugin needs passwordless ssh
+USER ${USER}
+WORKDIR /home/${USER}
+COPY ${BUILD_ROOT}/conf/ssh_config /home/${USER}/
+COPY ${BUILD_ROOT}/scripts/setup_ssh.sh /home/${USER}/
+RUN /home/${USER}/setup_ssh.sh
+
+RUN mkdir -p /home/${USER}/Spindle
+# Copy the Spindle repo into the container
+COPY . /home/${USER}/Spindle
+COPY ${BUILD_ROOT}/scripts/build_spindle.sh /home/${USER}/build_spindle.sh
+RUN ./build_spindle.sh
+
+COPY ${BUILD_ROOT}/scripts/entrypoint.sh /home/${USER}/entrypoint.sh
+ENV PATH /home/${USER}/Spindle-inst/bin:$PATH
+
+ENV SLURM_MPI_TYPE pmi2
+ENTRYPOINT /bin/bash ./entrypoint.sh
+
