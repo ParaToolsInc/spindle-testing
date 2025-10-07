@@ -67,11 +67,11 @@ ARG USER=slurmuser
 ARG UID=1001
 RUN /add_docker_user.sh
 
-ARG SLURM_VERSION
+ARG SLURM_VERSION=slurm-25-05-3-1
 COPY ${BUILD_ROOT}/scripts/build_slurm.sh /build_slurm.sh
 RUN /build_slurm.sh
 
-ARG MPICH_VERSION
+ARG MPICH_VERSION=4.2.2
 COPY ${BUILD_ROOT}/scripts/build_mpich.sh /build_mpich.sh
 RUN /build_mpich.sh
 
