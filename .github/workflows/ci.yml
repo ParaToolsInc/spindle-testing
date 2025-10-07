@@ -118,22 +118,30 @@ jobs:
         with:
           version: latest
 
+      - name: Login to GitHub Container Registry
+        if: ${{ !env.ACT }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate MariaDB configuration
         id: slurm-ubuntu-mariadb
         run: |
-          cd containers/spindle-slurm-ubuntu
+          cd containers/spindle-slurm-ubuntu/testing
           ./generate_config.sh
 
       - name: Build spindle-slurm-ubuntu image
         id: slurm-ubuntu-build
         run: |
-          cd containers/spindle-slurm-ubuntu
+          cd containers/spindle-slurm-ubuntu/testing
           docker compose --progress=plain build
 
       - name: Bring spindle-slurm-ubuntu up
         id: slurm-ubuntu-up
         run: |
-          cd containers/spindle-slurm-ubuntu
+          cd containers/spindle-slurm-ubuntu/testing
           docker compose up -d --wait --wait-timeout 60
 
       - name: Verify munge works in spindle-slurm-ubuntu
@@ -151,6 +159,6 @@ jobs:
         if: ${{ always() }}
         continue-on-error: true
         run: |
-          cd containers/spindle-slurm-ubuntu
+          cd containers/spindle-slurm-ubuntu/testing
           docker compose down
 

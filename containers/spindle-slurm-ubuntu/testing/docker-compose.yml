@@ -3,11 +3,9 @@ x-shared-workers:
   &workers
   replicas: 4 
 
-# Ubuntu version to use (noble = 24.04)
+# Base image version to use
 x-shared-build-args: &shared-build-args
-  UBUNTU_VERSION: noble
-  SLURM_VERSION: slurm-25-05-3-1
-  MPICH_VERSION: 4.2.2
+  BASE_VERSION: latest
   <<: *workers
 
 # Docker prohibits copying files from outside of the build context.
@@ -20,8 +18,8 @@ x-shared-build-args: &shared-build-args
 #  args: *shared-build-args
 
 x-shared-build-context: &shared-build-context
-  context: ../..
-  dockerfile: containers/spindle-slurm-ubuntu/Dockerfile
+  context: ../../..
+  dockerfile: containers/spindle-slurm-ubuntu/testing/Dockerfile
   args: *shared-build-args
 
 # Name of the head node

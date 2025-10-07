@@ -1,7 +1,5 @@
 ARG UBUNTU_VERSION=noble
 FROM ubuntu:${UBUNTU_VERSION}
-ARG replicas=4
-ENV workers=${replicas}
 USER root
 
 RUN apt-get update \
@@ -55,7 +53,7 @@ RUN mkdir -p /run/munge && \
     chown munge:munge /run/munge && \
     chmod 0755 /run/munge
 
-ARG BUILD_ROOT=containers/spindle-slurm-ubuntu
+ARG BUILD_ROOT=.
 COPY ${BUILD_ROOT}/scripts/add_docker_user.sh /add_docker_user.sh
 
 # Slurm daemons run as $SLURM_USER
@@ -77,31 +75,7 @@ ARG MPICH_VERSION
 COPY ${BUILD_ROOT}/scripts/build_mpich.sh /build_mpich.sh
 RUN /build_mpich.sh
 
-COPY ${BUILD_ROOT}/scripts/setup_slurm.sh /setup_slurm.sh
-COPY ${BUILD_ROOT}/conf/slurm.conf /home/${SLURM_USER}/slurm.conf
-COPY ${BUILD_ROOT}/conf/slurmdbd.conf /home/${SLURM_USER}/slurmdbd.conf
-COPY ${BUILD_ROOT}/conf/cgroup.conf /home/${SLURM_USER}/cgroup.conf
-RUN /setup_slurm.sh
-
 COPY ${BUILD_ROOT}/conf/mpich.conf /etc/ld.so.conf.d/mpich.conf
 RUN ldconfig
 
-# Slurm without Spank plugin needs passwordless ssh
-USER ${USER}
-WORKDIR /home/${USER}
-COPY ${BUILD_ROOT}/conf/ssh_config /home/${USER}/
-COPY ${BUILD_ROOT}/scripts/setup_ssh.sh /home/${USER}/
-RUN /home/${USER}/setup_ssh.sh
-
-RUN mkdir -p /home/${USER}/Spindle
-# Copy the Spindle repo into the container
-COPY . /home/${USER}/Spindle
-COPY ${BUILD_ROOT}/scripts/build_spindle.sh /home/${USER}/build_spindle.sh
-RUN ./build_spindle.sh
-
-COPY ${BUILD_ROOT}/scripts/entrypoint.sh /home/${USER}/entrypoint.sh
-ENV PATH /home/${USER}/Spindle-inst/bin:$PATH
-
 ENV SLURM_MPI_TYPE pmi2
-ENTRYPOINT /bin/bash ./entrypoint.sh
-
